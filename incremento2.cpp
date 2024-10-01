@@ -5,9 +5,7 @@
 #include <string>
 #include <cmath>
 
-// Declaração da função selectEos
 void selectEos(int opcao, double Tc, double Pc, double omega, double T, double V);
-
 
 int main() {
     std::vector<std::string> componentes;
@@ -37,7 +35,7 @@ int main() {
     
     std::cout << "Componentes disponíveis:" << std::endl; //Exibir 
     for (size_t i = 0; i < componentes.size(); ++i) {
-       // std::cout << i << ": " << componentes[i] << std::endl;
+       // std::cout << i << ": " << componentes[i] << std::endl; //exibe só os nomes e indices
         std::cout << i << ": " << componentes[i]
             << " | Tc: " << Tc[i] << " | Pc: " << Pc[i] 
             << " | omega: " << omega[i] << std::endl;
