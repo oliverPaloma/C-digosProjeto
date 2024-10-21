@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <fstream>
 #include <string.h>
+#include <functional>
 
 // The universal gas constant (in J/(mol*K))
 const auto R = 8.3144621;

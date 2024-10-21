@@ -2,25 +2,8 @@
 
 // Função para calcular a equação de estado com base na seleção do usuário
 
-void calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints)
-{
-    std::string Tstring = std::to_string(T); // conversão de double para string
-
-    auto inputFileName = "isoterma_" + Tstring + ".out"; // nome do arquivo
-
-    
-
-   
-  std::ifstream input_file (inputFileName);  // usar ofstream para abrir arquivo de escrita
-  if (!input_file.is_open()) 
-  {
-    std::cout << "Error opening input data: `" << inputFileName << "`" << std::endl; 
-    return 0;
-  } 
-
-  input_file << "V(m³/mol)\tP(Pa)";
-
-    // Constantes para as equações de estado
+void calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints){
+        // Constantes para as equações de estado
 
   auto V = Vi;
   auto inc = (Vf - Vi) / ((double)npoints - 1.0);
@@ -28,22 +11,134 @@ void calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vect
 
   for(auto i = 0.; i < npoints; i++) 
   {
-    calculatePressure(opcao,Tc,Pc,omega,T,V,P); 
-    input_file << V << "\t" << P;
+    calculatePressure(EoSModel,Tc,Pc,omega,T,V); 
+    //input_file << V << "\t" << P;
     V += inc;
   }
   
-  input_file.close();
 } 
 
 
 
 // Função para calcular a equação de estado com base na seleção do usuário  Eq 3.42
-void calculatePressure(int opcao, double Tc, double Pc, double omega, double T, double V, double &P) {
-    // Constantes para as equações de estado
-    double beta, q, Z;
+void calculatePressure(CubicEOSModel EoSModel, double Tc, double Pc, double omega, double T, double V) {//, double &P
+    const double R = 8.314;  
+    double psi, sigma, epsilon, b, alphaT, Tr, alphaTr, P;
 
-    switch (opcao) {
+    std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt";
+    std::ofstream outfile(filename);
+
+    if (!outfile.is_open()) {
+        std::cerr << "Erro ao abrir o arquivo!" << std::endl;
+        return;
+    }
+
+    outfile << "V(m³/mol)\tP(Pa)\n";  
+      
+        switch (EoSModel) {
+            case CubicEOSModel::VanDerWaals: //van der waals vdW case C return 0.0;
+                psi = 27.0 / 64.0;
+                sigma = 0;
+                epsilon = 0;
+                alphaTr = 1;  
+
+                b = (R * Tc) / (8 * Pc);  
+                alphaT = psi * (R * R * Tc * Tc) / Pc;  
+
+                P = (R * T) / (V - b) - (alphaT / ((V + epsilon * b) * (V + sigma * b)));
+                std::cout << "Pressão (vdW): " << P << " Pa" << std::endl;
+                break;
+
+            case CubicEOSModel::SoaveRedlichKwong: //soave-redlich-kwong SRK    
+                psi = 0.42748;
+                sigma = 1;
+                epsilon = 0;
+
+                Tr = T / Tc;
+                alphaTr = pow(1 + (0.480 + 1.574 * omega - 0.176 * omega * omega) * (1 - sqrt(Tr)), 2);  
+                b = 0.08664 * (R * Tc) / Pc;  
+                alphaT = psi * (alphaTr * R * R * Tc * Tc) / Pc; 
+
+                P = (R * T) / (V - b) - (alphaT / ((V + epsilon * b) * (V + sigma * b)));
+                std::cout << "Pressão (SRK): " << P << " Pa" << std::endl;
+                break;
+
+            case CubicEOSModel::PengRobinson: //peng-robinson PR  
+                psi = 0.45724;
+                sigma = 1 + sqrt(2);
+                epsilon = 1 - sqrt(2);
+
+                Tr = T / Tc;
+                alphaTr = pow(1 + (0.37464 + 1.54226 * omega - 0.26992 * omega * omega) * (1 - sqrt(Tr)), 2);  
+
+                b = 0.07780 * (R * Tc) / Pc; 
+                alphaT = psi * (alphaTr * R * R * Tc * Tc) / Pc;  
+
+                P = (R * T) / (V - b) - (alphaT / ((V + epsilon * b) * (V + sigma * b)));
+                std::cout << "Pressão (PR): " << P << " Pa" << std::endl;
+                break;
+
+            default:
+                std::cout << "Opção inválida." << std::endl;
+                return;
+        }
+        outfile << V << "\t" << P << "\n";
+    
+
+    outfile.close();
+    std::cout << "Dados armazenados no arquivo: " << filename << std::endl; }
+
+/*
+
+               P = (R * T) / (V - b) - (alphaT / ((V + epsilon * b) * (V + sigma * b)));
+                //const auto P = RT/(V - b) - a/((V + e*b)*(V + s*b));
+
+                std::cout << "Pressão ("<< toString(eosModel) <<"): " << P << " Pa" << std::endl;
+*/
+//van der waals vdW     
+//psi = 27.0 / 64.0  
+//sigma = 0;  
+//epsilon = 0;    
+//alphaTr = 1;  
+// b = (R * Tc) / (8 * Pc);   
+//alphaT = psi * (R * R * Tc * Tc) / Pc;  
+
+                
+//soave-redlich-kwong SRK
+//psi = 0.42748;
+//sigma = 1;
+//epsilon = 0;
+//Tr = T / Tc;
+//alphaTr = pow(1 + (0.480 + 1.574 * omega - 0.176 * omega * omega) * (1 - sqrt(Tr)), 2);  
+//b = 0.08664 * (R * Tc) / Pc;  
+//alphaT = psi * (alphaTr * R * R * Tc * Tc) / Pc; 
+
+               //double sigma = computesigma(eosModel); 
+               //double epsilon = computeepsilon(eosModel); 
+               //double psi = computePsi(eosModel); 
+
+                 //double omeg = computeOmega(eosModel); //usado para calcular Z
+               
+              
+
+    
+//peng-robinson PR
+//psi = 0.45724;
+//sigma = 1 + sqrt(2);
+//epsilon = 1 - sqrt(2);
+//Tr = T / Tc;
+//alphaTr = pow(1 + (0.37464 + 1.54226 * omega - 0.26992 * omega * omega) * (1 - sqrt(Tr)), 2);  
+//b = 0.07780 * (R * Tc) / Pc; 
+//alphaT = psi * (alphaTr * R * R * Tc * Tc) / Pc;  
+
+/*
+switch (EoSModel) {
+
+        case CubicEOSModel::VanDerWaals: return 0.0;
+        case CubicEOSModel::RedlichKwong: return 1.0;
+        case CubicEOSModel::SoaveRedlichKwong: return 1.0;
+        case CubicEOSModel::PengRobinson: return 1.0 + 1.4142135623730951;
+        default: return 1.0 + 1.4142135623730951;
         case 0: // Van der Waals
             beta = omega * (Pc / Tc); //pr=p/pc
             q = (27.0 / 64.0) * (Tc / omega);
@@ -69,7 +164,7 @@ void calculatePressure(int opcao, double Tc, double Pc, double omega, double T, 
             std::cout << "Opção inválida." << std::endl;
             break;
     }
-}
+*/
 
 
 //=================================================================================================
@@ -161,7 +256,7 @@ auto alpha(CubicEOSModel type) -> Fn<AlphaResult(double, double, double)>
     }
 }
 
-auto computesigma(CubicEOSModel type) -> double
+auto computesigma(CubicEOSModel type) -> double //computesigma
 {
     switch(type)
     {
@@ -526,3 +621,5 @@ auto compute(CubicEOSProps& props, std::vector<double> &Tcr,
     }
 
 }
+
+//2 funções q calcula isotermas e pressao em funcao do volume e temperatura,// cabeçalho do .hpp

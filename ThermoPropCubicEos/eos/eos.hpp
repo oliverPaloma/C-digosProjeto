@@ -1,14 +1,6 @@
 #include "../includes.hpp"
 #include "../metodosMatematicos/metodosMatematicos.hpp"
 
-
-
-void calculatePressure(int opcao, double Tc, double Pc, double omega, double T, double V, double &P);
-//cabelhaço da função calculate isotermas: 
-//void calculateIsoterma(CubicEOSModel EoSModel, double Tc, double Pc, double omega, double T, double Vi, double Vf, int npoints)
-//void calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints); 
-void calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints);
-
 enum class StateOfMatter
 {
     superCritical,
@@ -21,7 +13,7 @@ struct CubicEOSProps
 {
     /// The molar volume of the phase (in m3/mol).
     double V = {};
-
+    
     /// The temperature derivative of the molar volume at constant pressure (in m3/(mol*K)).
     double VT = {};
 
@@ -48,8 +40,7 @@ struct CubicEOSProps
 };
 
 /// The options for the cubic equation of state models.
-
-enum class CubicEOSModel 
+enum class CubicEOSModel
 {
     VanDerWaals,
     RedlichKwong,
@@ -87,4 +78,7 @@ auto determinePhysicalStateThreedoubleRoots(double Zmin, double Zmax, double bet
 auto determinePhysicalStateOnedoubleRoot(double a, double b, double e, double s, 
   double T, double P) -> StateOfMatter;  
 
+auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, 
+                       double T, double Vi, double Vf, int npoints);
 
+auto calculatePressure(CubicEoSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V); 

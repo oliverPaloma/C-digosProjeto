@@ -5,7 +5,8 @@ int main ()
 {
   auto T = 323.15;
   auto P = 30000000.;
-  auto databasePath = "/home/palomajo/Downloads/ThermoPropCubicEos/database/test.yml";
+ // auto databasePath = "/home/fellipe/Dropbox/Pessoais/Downloads/ThermoPropCubicEos/database/test.yml";
+  auto databasePath = "/home/paloma-j-oliveira/Documentos/ThermoPropCubicEos/database/test.yml";
   auto components = "CO2 H2O";
   std::vector<double> Tc,Pc,omega;
   std::vector<std::vector<double>> kij(2, std::vector<double>(2)); //  there are three components, this matrix is initialized as a 3x3 matrix with zeroes
