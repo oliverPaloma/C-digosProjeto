@@ -78,7 +78,7 @@ auto determinePhysicalStateThreedoubleRoots(double Zmin, double Zmax, double bet
 auto determinePhysicalStateOnedoubleRoot(double a, double b, double e, double s, 
   double T, double P) -> StateOfMatter;  
 
-auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, 
+double calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, 
                        double T, double Vi, double Vf, int npoints);
 
-auto calculatePressure(CubicEoSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V); 
+double calculatePressure(CubicEOSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V); 
