@@ -2,80 +2,78 @@
 
 // Função para calcular a equação de estado com base na seleção do usuário
 
-double calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints) {
-    // Constantes para as equações de estado
-    auto V = Vi;
-    auto inc = (Vf - Vi) / ((double)npoints - 1.0);
-    double P;
-
-    std::string filename = "Arquivos/isoterma_T" + std::to_string(static_cast<int>(T)) + ".txt";
+auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints)->void{
+        // Constantes para as equações de estado
+ std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt"; //std :: string EoSModel
     std::ofstream outfile(filename);
 
     if (!outfile.is_open()) {
         std::cerr << "Erro ao abrir o arquivo!" << std::endl;
-        return 0.0;
+        return;
     }
+ outfile << "V(m³/mol)\tP(Pa)\n";  
+  auto V = Vi;
+  auto inc = (Vf - Vi) / ((double)npoints - 1.0);
+  double P;
 
-    outfile << "V(m³/mol)\tP(Pa)\n";  
-
-    for (auto i = 0; i < npoints; i++) {
-        
-        P = calculatePressure(EoSModel, Tc, Pc, omega, T, V); 
-        outfile << V << "\t" << P << "\n";  
-        V += inc;
-    }
-
+  for(auto i = 0; i < npoints; i++) 
+  {
+    calculatePressure(EoSModel,Tc,Pc,omega,T,V,P); 
+    outfile << V << "\t" << P << "\n";
+    V += inc;
+  }
     outfile.close();
-    std::cout << "Dados armazenados no arquivo: " << filename << std::endl;
-    
-    return 0.0; 
-}
-
+    std::cout << "Dados armazenados no arquivo: " << filename << std::endl; 
+} 
 
 // Função para calcular a equação de estado com base na seleção do usuário  Eq 3.42
-double calculatePressure(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double V) {
-    const double R = 8.314;  
-    double psi, sigma, epsilon, b, alphT, Tr, alphTr, P;
+auto calculatePressure(CubicEOSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V, double &P)-> void { //, double &P
+ 
+   
+    
 
-    switch (EoSModel) {
-        case CubicEOSModel::VanDerWaals: 
-            psi = 27.0 / 64.0;
-            sigma = 0;
-            epsilon = 0;
-            alphTr = 1;
-            b = (R*Tc) / (8*Pc);
-            alphT = psi * (R * R * Tc * Tc) / Pc;
-            P = (R * T) / (V - b) - (alphT / ((V + epsilon * b) * (V + sigma * b)));
-            break;
 
-        case CubicEOSModel::SoaveRedlichKwong: 
-            psi = 0.42748;
-            sigma = 1;
-            epsilon = 0;
-            Tr = T / Tc;
-            alphTr = pow(1 + (0.480 + 1.574 * omega - 0.176 * omega * omega) * (1 - sqrt(Tr)), 2);
-            b = 0.08664 * (R * Tc) / Pc;
-            alphT = psi * (alphTr * R * R * Tc * Tc) / Pc;
-            P = (R * T) / (V - b) - (alphT / ((V + epsilon * b) * (V + sigma * b)));
-            break;
 
-        case CubicEOSModel::PengRobinson: 
-            psi = 0.45724;
-            sigma = 1 + sqrt(2);
-            epsilon = 1 - sqrt(2);
-            Tr = T / Tc;
-            alphTr = pow(1 + (0.37464 + 1.54226 * omega - 0.26992 * omega * omega) * (1 - sqrt(Tr)), 2);
-            b = 0.07780 * (R * Tc) / Pc;
-            alphT = psi * (alphTr * R * R * Tc * Tc) / Pc;
-            P = (R * T) / (V - b) - (alphT / ((V + epsilon * b) * (V + sigma * b)));
-            break; 
-        default:
-            std::cout << "Opção inválida." << std::endl;
-            return 0.0;
+    
+    
+       auto sigma = computesigma(EoSModel); 
+       auto epsilon = computeepsilon(EoSModel); 
+       auto psi = computePsi(EoSModel); 
+       auto OMEGA = computeOmega(EoSModel); 
+
+       auto Tr = T / Tc[0];
+       double alphaTr;
+        switch (EoSModel) {
+            
+            case CubicEOSModel::VanDerWaals: //van der waals vdW case C return 0.0;
+                alphaTr = 1.; 
+                break;
+
+            case CubicEOSModel::SoaveRedlichKwong: //soave-redlich-kwong SRK    
+                alphaTr = pow(1. + (0.480 + 1.574 * omega[0]- 0.176 * omega[0] * omega[0]) * (1. - sqrt(Tr)), 2.);  
+                break;
+
+            case CubicEOSModel::PengRobinson: //peng-robinson PR  
+                alphaTr = pow(1. + (0.37464 + 1.54226 * omega[0] - 0.26992 * omega[0] * omega[0]) * (1. - sqrt(Tr)), 2.);  
+                break;
+
+            default:
+                std::cout << "Opção inválida." << std::endl;
+                return;
+        }
+        
+
+       auto b = OMEGA * (R * Tc[0]) / Pc[0]; 
+       auto alphaT = psi * (alphaTr * R * R * Tc[0] * Tc[0]) / Pc[0]; 
+        P = (R * T) / (V - b) - (alphaT / ((V + epsilon * b) * (V + sigma * b)));
+        
+        
+       
+    
+
+    
+    
     }
-    return P; 
-}
-
 
 /*
 
@@ -214,7 +212,9 @@ auto alpha(CubicEOSModel type) -> Fn<AlphaResult(double, double, double)>
 
     // The alpha function for Peng-Robinson (1978) EOS
     auto alphaPR = [](double Tr, double TrT, double omega) -> AlphaResult
-    {
+    { 
+
+
         // Jaubert, J.-N., Vitu, S., Mutelet, F. and Corriou, J.-P., 2005.
         // Extension of the PPR78 model (predictive 1978, Peng–Robinson EOS
         // with temperature dependent kij calculated through a group
@@ -244,7 +244,7 @@ auto alpha(CubicEOSModel type) -> Fn<AlphaResult(double, double, double)>
         default: return alphaPR;
     }
 }
- 
+
 auto computesigma(CubicEOSModel type) -> double //computesigma
 {
     switch(type)
@@ -269,11 +269,11 @@ auto computeepsilon(CubicEOSModel type) -> double
     }
 }
 
-auto computeOmega(CubicEOSModel type) -> double
+auto computeOmega(CubicEOSModel type) -> double 
 {
     switch(type)
     {
-        case CubicEOSModel::VanDerWaals: return 1.0/8.0;
+        case CubicEOSModel::VanDerWaals: return 1.0/8.0; 
         case CubicEOSModel::RedlichKwong: return 0.08664;
         case CubicEOSModel::SoaveRedlichKwong: return 0.08664;
         case CubicEOSModel::PengRobinson: return 0.0777960739;
