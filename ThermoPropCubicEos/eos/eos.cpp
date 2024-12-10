@@ -95,7 +95,7 @@ P = (R * T) / (V - b_mistura) - (a_mistura / ((V + epsilon * b_mistura) * (V + s
 
 
 
-auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints, std::vector<double>z,int ncomp)->void{
+auto calculateIsotermaMisture(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints, std::vector<double>z,int ncomp)->void{
  
     std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt"; //std :: string EoSModel
     std::ofstream outfile(filename);
@@ -111,7 +111,7 @@ auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vect
 
   for(auto i = 0; i < npoints; i++) 
   {
-    calculatePressure(EoSModel,Tc,Pc,omega,T,V,P,z,ncomp); 
+    calculatePressureMisture(EoSModel,Tc,Pc,omega,T,V,P,z,ncomp); 
     outfile << V << "\t" << P << "\n";
     V += inc;
   }
@@ -120,7 +120,7 @@ auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vect
 } 
 
 // Função para calcular a equação de estado com base na seleção do usuário  Eq 3.42
-auto calculatePressure(CubicEOSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V, double &P, std::vector<double>z, int ncomp)-> void { //, double &P //
+auto calculatePressureMisture(CubicEOSModel EoSModel,std::vector<double> Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V, double &P, std::vector<double>z, int ncomp)-> void { //, double &P //
     
        auto sigma = computesigma(EoSModel); 
        auto epsilon = computeepsilon(EoSModel); 
@@ -176,6 +176,65 @@ auto calculatePressure(CubicEOSModel EoSModel,std::vector<double> Tc,std::vector
     }
         P = (R * T) / (V - b_mistura) - (a_mistura / ((V + epsilon * b_mistura) * (V + sigma * b_mistura))); //for
     }
+
+
+/*
+auto calculateIsoterma(CubicEOSModel EoSModel, std::vector<double> Tc, std::vector<double> Pc, std::vector<double> omega, double T, double Vi, double Vf, int npoints)->void
+{
+    std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt"; 
+    std::ofstream outfile(filename);
+    
+    if (!outfile.is_open()) {
+        std::cerr << "Erro ao abrir o arquivo!" << std::endl;
+        return;
+    }
+
+    outfile << "V(m³/mol)\tP(Pa)\n";  
+    auto V = Vi;
+    auto inc = (Vf - Vi) / ((double)npoints - 1.0);
+    double P;
+
+    for(auto i = 0; i < npoints; i++) 
+    {
+    calculatePressure(EoSModel,Tc,Pc,omega,T,V,P); 
+    outfile << V << "\t" << P << "\n";
+    V += inc;
+    }
+    outfile.close();
+    std::cout << "Dados armazenados no arquivo: " << filename << std::endl; 
+}
+
+auto calculatePressure(CubicEOSModel EoSModel,std::vector<double>Tc,std::vector<double>Pc,std::vector<double> omega,double T, double V, double &P)-> void {
+       auto sigma = computesigma(EoSModel); 
+       auto epsilon = computeepsilon(EoSModel); 
+       auto psi = computePsi(EoSModel); 
+       auto OMEGA = computeOmega(EoSModel); 
+
+      auto Tr;
+      auto alphaTr;
+
+       Tr = T/Tc; 
+            switch (EoSModel) {
+            case CubicEOSModel::VanDerWaals: 
+                alphaTr = 1.; 
+                break;
+            case CubicEOSModel::SoaveRedlichKwong: 
+                alphaTr = pow(1. + (0.480 + 1.574 * omega- 0.176 * omega * omega) * (1. - sqrt(Tr)), 2.);   
+                break;
+            case CubicEOSModel::PengRobinson: 
+                alphaTr = pow(1. + (0.37464 + 1.54226 * omega - 0.26992 * omega * omega) * (1. - sqrt(Tr)), 2.);   
+                break;
+            default:
+                std::cout << "Opção inválida." << std::endl;
+                return;
+            }
+
+            auto b = OMEGA * (R * Tc) / Pc; 
+            auto a = psi * (alphaTr * R * R * Tc * Tc) / Pc; 
+            P = (R * T) / (V - b) - (a / ((V + epsilon * b) * (V + sigma * b)));
+}
+
+*/
 
 //=================================================================================================
 // == REFERENCE ==
