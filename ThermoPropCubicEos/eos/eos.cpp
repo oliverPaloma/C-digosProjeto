@@ -1,29 +1,31 @@
 #include "eos.hpp"
 
-auto calculateIsotermaComp(CubicEOSModel EoSModel,std::vector<double>Tc,std::vector<double>Pc, std::vector<double>omega,double T, std::vector<double>V, std::vector<double>z,int ncomp) -> void {
+//colocar por ponteiro os vetores!!!!!! para ele nãp criar um vetor novo a cada vez que entra na função.
 
-std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt";
+auto calculateIsotermaComp(CubicEOSModel EoSModel, std::vector<double>Tc, std::vector<double>Pc, std::vector<double>omega , double T, std::vector<double>V, std::vector<double>z,int ncomp) -> void {
+
+std::string filename = "Arquivos/pressao_T" + std::to_string(static_cast<int>(T)) + ".txt"; // colocar equação utilizada 
 std::ofstream outfile(filename);if (!outfile.is_open()) {
     std::cerr << "Erro ao abrir o arquivo!" << std::endl;
     return;
 }
 
 outfile << "V(m³/mol)\tP(Pa)\n";
-
 double P;
 
-/*
-*/
-
-for (int i=0; i<V.size();i++) { 
+/*  for (int i=0; i<V.size();i++) { 
     calculatePressureComp(EoSModel, Tc, Pc, omega, T, V[i], P, z, ncomp);
     outfile << V[i] << "\t" << P << "\n";
-}
-/*
+} */
+
 for (const auto& volume : V) { 
     calculatePressureComp(EoSModel, Tc, Pc, omega, T, volume , P, z, ncomp);
     outfile << volume << "\t" << P << "\n";
-}*/
+    }
+
+
+/*
+*/
 
 outfile.close();
 
@@ -49,42 +51,45 @@ if (ncomp0 != ncomp) {
     ncomp0 = ncomp;
 }
 
-for (int i = 0; i < ncomp; ++i) {
-    Tr[i] = T / Tc[i];
-    switch (EoSModel) {
-        case CubicEOSModel::VanDerWaals:
-            alphaTr[i] = 1.0;
-            break;
-        case CubicEOSModel::SoaveRedlichKwong:
-            alphaTr[i] = pow(1.0 + (0.480 + 1.574 * omega[i] - 0.176* omega[i] * omega[i]) * (1.0 - sqrt(Tr[i])), 2.0);
-            break;
-        case CubicEOSModel::PengRobinson:
-            alphaTr[i] = pow(1.0 + (0.37464 + 1.54226 * omega[i] - 0.26992 * omega[i] * omega[i]) * (1.0 - sqrt(Tr[i])), 2.0);
-            break;
-        default:
-            std::cout << "Opção inválida." << std::endl;
-            return;
+   
+     for (int i = 0; i < ncomp0; ++i) { 
+
+       Tr[i] = T / Tc[i]; //for 
+            switch (EoSModel) {
+            case CubicEOSModel::VanDerWaals: //van der waals vdW case C return 0.0;
+                alphaTr[i] = 1.; 
+                break;
+            case CubicEOSModel::SoaveRedlichKwong: //soave-redlich-kwong SRK    
+                alphaTr[i] = pow(1. + (0.480 + 1.574 * omega[i]- 0.176 * omega[i] * omega[i]) * (1. - sqrt(Tr[i])), 2.);   //for
+                break;
+            case CubicEOSModel::PengRobinson: //peng-robinson PR  
+                alphaTr[i] = pow(1. + (0.37464 + 1.54226 * omega[i] - 0.26992 * omega[i] * omega[i]) * (1. - sqrt(Tr[i])), 2.);   //for
+                break;
+            default:
+                std::cout << "Opção inválida." << std::endl;
+                return;
+            }
+     }
+
+
+       for (auto i = 0; i < ncomp; ++i) { //Tc.size()
+        b[i] = OMEGA * (R * Tc[i]) / Pc[i];  //for
+        a[i] = psi * (alphaTr[i] * R * R * Tc[i] * Tc[i]) / Pc[i]; //for a
+       }
+        
+        auto a_mistura=0., b_mistura=0.;
+
+       for (auto i = 0; i < ncomp; ++i) {
+             for (auto j = 0; j < ncomp; ++j) {     // Calcula a_mistura usando regra de mistura com k_ij = 0
+                 a_mistura += z[i] * z[j] * sqrt(a[i] * a[j]);
+             }
+         }
+
+       for (auto i = 0; i < ncomp; ++i) {     //b_mistura usando regra de mistura linear
+             b_mistura += z[i] * b[i];
     }
-}
 
-for (int i = 0; i < ncomp; ++i) {
-    b[i] = OMEGA * (R * Tc[i]) / Pc[i];
-    a[i] = psi * (alphaTr[i] * R * R * Tc[i] * Tc[i]) / Pc[i];
-}
-
-static double a_mistura = 0.0, b_mistura = 0.0;
-
-for (int i = 0; i < ncomp; ++i) {
-    for (int j = 0; j < ncomp; ++j) {
-        a_mistura += z[i] * z[j] * sqrt(a[i] * a[j]);
-    }
-}
-
-for (int i = 0; i < ncomp; ++i) {
-    b_mistura += z[i] * b[i];
-}
-
-P = (R * T) / (V - b_mistura) - (a_mistura / ((V + epsilon * b_mistura) * (V + sigma * b_mistura)));
+P = (R * T) / (V - b_mistura) - (a_mistura / ((V + epsilon * b_mistura) * (V + sigma * b_mistura))); //for
 
 }
 
@@ -626,7 +631,6 @@ auto compute(CubicEOSProps& props, std::vector<double> &Tcr,
 
         props.ln_phi[k] = Zk - (Zk - betak)/(Z - beta) - log(Z - beta) + q*I - qk*I - q*Ik;
     }
-
 }
 
 //2 funções q calcula isotermas e pressao em funcao do volume e temperatura,// cabeçalho do .hpp
